@@ -9,12 +9,11 @@ from django.forms import ModelForm
 from django.http import (
     HttpRequest,
     HttpResponse,
+    HttpResponseBase,
     HttpResponsePermanentRedirect,
     HttpResponseRedirect,
 )
 from django.shortcuts import get_object_or_404, redirect, render
-from django.http import HttpRequest, HttpResponse, HttpResponseBase
-from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, UpdateView, View
 from django_filters.views import FilterView
@@ -27,6 +26,7 @@ from borrowd_permissions.mixins import (
     LoginOr404PermissionMixin,
 )
 from borrowd_permissions.models import BorrowdGroupOLP
+from borrowd_users.models import SearchTerm, SearchTarget
 
 from .exceptions import ModeratorRequiredException
 from .filters import GroupFilter
@@ -330,10 +330,29 @@ class GroupListView(LoginRequiredMixin, FilterView):  # type: ignore[misc]
     model = Membership
     filterset_class = GroupFilter
 
+    def get(
+        self, request: HttpRequest, *args: Any, **kwargs: Any
+    ) -> HttpResponse:
+        term = request.GET.get("search")
+        if term is not None:
+            SearchTerm.record_search(
+                user=request.user,
+                target=SearchTarget.GROUPS,
+                term=term,
+            )
+        return super().get(request, *args, **kwargs)
+
     def get_template_names(self) -> list[str]:
         if self.request.headers.get("HX-Request"):
             return ["groups/group_list_card.html"]
         return [self.template_name]
+
+    def get_context_data(self, **kwargs: str) -> dict[str, Any]:
+        context: dict[str, Any] = super().get_context_data(**kwargs)
+        context["has_groups"] = Membership.objects.filter(
+            user=self.request.user
+        ).exists()
+        return context
 
 
 class GroupUpdateView(
