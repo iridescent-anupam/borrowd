@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 from django.contrib.auth.models import Group
 from django.db.models.query import QuerySet
@@ -14,6 +14,16 @@ from borrowd_permissions.models import BorrowdGroupOLP, ItemOLP
 from borrowd_users.models import BorrowdUser
 
 
+def compute_per_group_unique_name(base_name: str, user_id: int) -> str:
+    """
+    Compute a unique name for the auth Group associated with a BorrowdGroup,
+    based on the BorrowdGroup's name and the ID of the user that created it.
+    This is necessary because Django's auth Groups require globally unique names,
+    but we want to allow different users to create groups with the same name.
+    """
+    return f"{base_name}_user_{user_id}"
+
+
 @receiver(post_save, sender=BorrowdGroup)
 def maintain_perms_group_on_borrowd_group_change(
     sender: BorrowdGroup, instance: BorrowdGroup, created: bool, **kwargs: str
@@ -22,15 +32,23 @@ def maintain_perms_group_on_borrowd_group_change(
     # group onto the borrowd group, because we need to maintain this linkage
     # even if the name changes
     if created:
-        perms_group = Group.objects.create(name=instance.name)
+        creator = cast(BorrowdUser, instance.created_by)
+        perms_group = Group.objects.create(
+            name=compute_per_group_unique_name(instance.name, creator.pk)
+        )
         instance.perms_group = perms_group
         instance.save()
 
     # on update, make sure that the names still match
     else:
         perms_group = instance.perms_group
-        if perms_group.name != instance.name:
-            perms_group.name = instance.name
+        creator = cast(BorrowdUser, instance.created_by)
+        perms_group_name = compute_per_group_unique_name(
+            instance.name,
+            creator.pk,
+        )
+        if perms_group.name != perms_group_name:
+            perms_group.name = perms_group_name
             perms_group.save()
 
 
@@ -127,9 +145,8 @@ def refresh_permissions_on_membership_update(
     # Handle Item permissions
     #
     user = instance.user
-    borrowd_group = instance.group
-    # error: "_ST" has no attribute "name"  [attr-defined]
-    group = Group.objects.get(name=borrowd_group.name)  # type: ignore[attr-defined]
+    borrowd_group = cast(BorrowdGroup, instance.group)
+    group = borrowd_group.perms_group
     new_trust_level = instance.trust_level
     membership = instance
 
