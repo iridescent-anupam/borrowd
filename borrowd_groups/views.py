@@ -22,7 +22,12 @@ from borrowd_permissions.models import BorrowdGroupOLP
 
 from .exceptions import ModeratorRequiredException
 from .filters import GroupFilter
-from .forms import GroupCreateForm, GroupJoinForm, UpdateTrustLevelForm
+from .forms import (
+    DUPLICATE_GROUP_NAME_ERROR,
+    GroupCreateForm,
+    GroupJoinForm,
+    UpdateTrustLevelForm,
+)
 from .models import BorrowdGroup, Membership
 
 GroupInvite = namedtuple("GroupInvite", ["group_id", "group_name"])
@@ -84,6 +89,11 @@ class GroupCreateView(
     model = BorrowdGroup
     form_class = GroupCreateForm
 
+    def get_form_kwargs(self) -> dict[str, Any]:
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
     def form_valid(self, form: ModelForm[BorrowdGroup]) -> HttpResponse:
         if self.request.user.is_authenticated:
             form.instance.created_by_id = form.instance.updated_by_id = (  # type: ignore[attr-defined]
@@ -96,6 +106,13 @@ class GroupCreateView(
         setattr(form.instance, "_temp_trust_level", form.cleaned_data["trust_level"])
 
         return super().form_valid(form)
+
+    def form_invalid(self, form: ModelForm[BorrowdGroup]) -> HttpResponse:
+        name_errors: list[str] = [str(error) for error in form.errors.get("name", [])]
+        if DUPLICATE_GROUP_NAME_ERROR in name_errors:
+            messages.error(self.request, DUPLICATE_GROUP_NAME_ERROR)
+
+        return super().form_invalid(form)
 
     def get_success_url(self) -> str:
         if self.object is None:
