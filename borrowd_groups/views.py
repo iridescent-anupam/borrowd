@@ -26,11 +26,16 @@ from borrowd_permissions.mixins import (
     LoginOr404PermissionMixin,
 )
 from borrowd_permissions.models import BorrowdGroupOLP
-from borrowd_users.models import SearchTerm, SearchTarget
+from borrowd_users.models import BorrowdUser, SearchTarget, SearchTerm
 
 from .exceptions import ModeratorRequiredException
 from .filters import GroupFilter
-from .forms import GroupCreateForm, GroupJoinForm, UpdateTrustLevelForm
+from .forms import (
+    GroupCreateForm,
+    GroupJoinForm,
+    GroupUpdateForm,
+    UpdateTrustLevelForm,
+)
 from .models import BorrowdGroup, Membership, MembershipStatus
 
 GroupInvite = namedtuple("GroupInvite", ["group_id", "group_name"])
@@ -89,12 +94,12 @@ class InviteSigner:
 class GroupCreateView(
     LoginRequiredMixin,  # type: ignore[misc]
     BorrowdTemplateFinderMixin,
-    CreateView[BorrowdGroup, ModelForm[BorrowdGroup]],
+    CreateView[BorrowdGroup, GroupCreateForm],
 ):
     model = BorrowdGroup
     form_class = GroupCreateForm
 
-    def form_valid(self, form: ModelForm[BorrowdGroup]) -> HttpResponse:
+    def form_valid(self, form: GroupCreateForm) -> HttpResponse:
         if self.request.user.is_authenticated:
             form.instance.created_by_id = form.instance.updated_by_id = (  # type: ignore[attr-defined]
                 self.request.user.pk
@@ -330,17 +335,16 @@ class GroupListView(LoginRequiredMixin, FilterView):  # type: ignore[misc]
     model = Membership
     filterset_class = GroupFilter
 
-    def get(
-        self, request: HttpRequest, *args: Any, **kwargs: Any
-    ) -> HttpResponse:
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         term = request.GET.get("search")
         if term is not None:
+            user: BorrowdUser = request.user  # type: ignore[assignment]
             SearchTerm.record_search(
-                user=request.user,
+                user=user,
                 target=SearchTarget.GROUPS,
                 term=term,
             )
-        return super().get(request, *args, **kwargs)
+        return super().get(request, *args, **kwargs)  # type: ignore[no-any-return]
 
     def get_template_names(self) -> list[str]:
         if self.request.headers.get("HX-Request"):
@@ -358,13 +362,13 @@ class GroupListView(LoginRequiredMixin, FilterView):  # type: ignore[misc]
 class GroupUpdateView(
     LoginOr404PermissionMixin,
     BorrowdTemplateFinderMixin,
-    UpdateView[BorrowdGroup, ModelForm[BorrowdGroup]],
+    UpdateView[BorrowdGroup, GroupUpdateForm],
 ):
     model = BorrowdGroup
     permission_required = BorrowdGroupOLP.EDIT
-    fields = ["name", "description", "logo", "banner", "membership_requires_approval"]
+    form_class = GroupUpdateForm
 
-    def form_valid(self, form: ModelForm[BorrowdGroup]) -> HttpResponse:
+    def form_valid(self, form: GroupUpdateForm) -> HttpResponse:
         if self.request.user.is_authenticated:
             form.instance.updated_by_id = self.request.user.pk  # type: ignore[attr-defined]
         return super().form_valid(form)
