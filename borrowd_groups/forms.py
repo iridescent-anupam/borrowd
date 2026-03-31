@@ -29,7 +29,7 @@ class GroupCreateForm(forms.ModelForm[BorrowdGroup]):
         labels = {
             "name": "Group name",
             "description": "Group description",
-            "banner": "Banner (optional)",
+            "banner": "Picture (optional)",
             "membership_requires_approval": ""
         }
 
