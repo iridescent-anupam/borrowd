@@ -371,6 +371,10 @@ class ItemPhotoDeleteView(
     def get_permission_object(self):  # type: ignore[no-untyped-def]
         return self.get_object().item
 
+    def form_valid(self, form: ModelForm[ItemPhoto]) -> HttpResponse:
+        _add_message_safe(self.request, messages.SUCCESS, "Photo deleted.")
+        return super().form_valid(form)
+
     def get_success_url(self) -> str:
         instance: ItemPhoto = self.object
         if instance is None:
