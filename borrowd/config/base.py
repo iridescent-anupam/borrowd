@@ -11,7 +11,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+import sys
 from pathlib import Path
+from typing import cast
 
 from django.urls import reverse_lazy
 
@@ -19,6 +21,9 @@ from borrowd.config.env import env
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+# Keep expected stack traces from tests from flooding `manage.py test` output while running tests
+IS_RUNNING_MANAGE_PY_TESTS = len(sys.argv) > 1 and sys.argv[1] == "test"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -249,6 +254,18 @@ LOGGING = {
         },
     },
 }
+
+# Keep expected stack traces from tests from flooding `manage.py test` output while running tests
+if IS_RUNNING_MANAGE_PY_TESTS:
+    logging_configuration_loggers = cast(
+        dict[str, dict[str, object]],
+        LOGGING["loggers"],
+    )
+    logging_configuration_loggers["django.request"] = {
+        "handlers": ["console"],
+        "level": "CRITICAL",
+        "propagate": False,
+    }
 
 SENTRY_DSN = "https://ba24455003326bec7fc90b49af2d5c27@o4510502108594176.ingest.us.sentry.io/4510660596137984"
 
