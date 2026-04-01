@@ -6,24 +6,44 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('borrowd_users', '0006_profile_bio'),
+        ("borrowd_users", "0006_profile_bio"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='SearchTerm',
+            name="SearchTerm",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('target', models.CharField(choices=[('items', 'Items'), ('groups', 'Groups')], max_length=10)),
-                ('term_raw', models.CharField(max_length=200)),
-                ('term_normalized', models.CharField(max_length=200)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='search_terms', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "target",
+                    models.CharField(
+                        choices=[("items", "Items"), ("groups", "Groups")],
+                        max_length=10,
+                    ),
+                ),
+                ("term_raw", models.CharField(max_length=200)),
+                ("term_normalized", models.CharField(max_length=200)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="search_terms",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
+                "ordering": ["-created_at"],
             },
         ),
     ]

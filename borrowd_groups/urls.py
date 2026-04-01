@@ -33,8 +33,8 @@ urlpatterns = [
         RemoveMemberView.as_view(),
         name="remove-member",
     ),
-    path( 
-        "membership/<int:membership_id>/approve/", 
+    path(
+        "membership/<int:membership_id>/approve/",
         ApproveMemberView.as_view(),
         name="approve-member",
     ),

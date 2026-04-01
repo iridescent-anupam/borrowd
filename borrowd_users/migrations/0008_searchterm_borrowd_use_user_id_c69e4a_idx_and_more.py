@@ -4,18 +4,22 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('borrowd_users', '0007_searchterm'),
+        ("borrowd_users", "0007_searchterm"),
     ]
 
     operations = [
         migrations.AddIndex(
-            model_name='searchterm',
-            index=models.Index(fields=['user', 'target', '-created_at'], name='borrowd_use_user_id_c69e4a_idx'),
+            model_name="searchterm",
+            index=models.Index(
+                fields=["user", "target", "-created_at"],
+                name="borrowd_use_user_id_c69e4a_idx",
+            ),
         ),
         migrations.AddIndex(
-            model_name='searchterm',
-            index=models.Index(fields=['target', '-created_at'], name='borrowd_use_target_7d8e20_idx'),
+            model_name="searchterm",
+            index=models.Index(
+                fields=["target", "-created_at"], name="borrowd_use_target_7d8e20_idx"
+            ),
         ),
     ]

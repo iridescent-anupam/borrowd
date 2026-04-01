@@ -317,7 +317,9 @@ class CustomPasswordChangeView(PasswordChangeView):  # type: ignore[misc]
 
 
 @login_required
-def search_terms_export_view(request: HttpRequest) -> JsonResponse | HttpResponseForbidden:
+def search_terms_export_view(
+    request: HttpRequest,
+) -> JsonResponse | HttpResponseForbidden:
     """
     Admin-only JSON export for search term analytics.
 

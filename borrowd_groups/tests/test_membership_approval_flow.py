@@ -22,7 +22,9 @@ class MembershipApprovalFlowTests(TestCase):
         encoded = InviteSigner.sign_invite(group.pk, group.name)
         return reverse("borrowd_groups:group-join", kwargs={"encoded": encoded})
 
-    def test_private_group_join_creates_pending_membership_and_blocks_access(self) -> None:
+    def test_private_group_join_creates_pending_membership_and_blocks_access(
+        self,
+    ) -> None:
         group = BorrowdGroup.objects.create(
             name="Private Group",
             created_by=self.moderator,
@@ -41,7 +43,9 @@ class MembershipApprovalFlowTests(TestCase):
         self.assertEqual(membership.status, MembershipStatus.PENDING)
         self.assertFalse(self.requester.has_perm(BorrowdGroupOLP.VIEW, group))
         self.assertEqual(
-            self.client.get(reverse("borrowd_groups:group-detail", args=[group.pk])).status_code,
+            self.client.get(
+                reverse("borrowd_groups:group-detail", args=[group.pk])
+            ).status_code,
             403,
         )
 
@@ -66,7 +70,9 @@ class MembershipApprovalFlowTests(TestCase):
         self.assertEqual(membership.status, MembershipStatus.ACTIVE)
         self.assertTrue(self.requester.has_perm(BorrowdGroupOLP.VIEW, group))
 
-    def test_moderator_can_approve_pending_and_grant_group_and_item_access(self) -> None:
+    def test_moderator_can_approve_pending_and_grant_group_and_item_access(
+        self,
+    ) -> None:
         group = BorrowdGroup.objects.create(
             name="Approval Group",
             created_by=self.moderator,

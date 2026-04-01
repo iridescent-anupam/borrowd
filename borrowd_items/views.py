@@ -2,6 +2,7 @@ from typing import Any
 
 from django.contrib import messages
 from django.contrib.messages.api import MessageFailure
+from django.core.validators import FileExtensionValidator
 from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
@@ -25,7 +26,14 @@ from .card_helpers import (
 )
 from .exceptions import InvalidItemAction, ItemAlreadyRequested
 from .filters import ItemFilter
-from .forms import ItemCreateWithPhotoForm, ItemForm, ItemPhotoForm
+from .forms import (
+    ALLOWED_IMAGE_ACCEPT,
+    ALLOWED_IMAGE_EXTENSIONS,
+    ItemCreateWithPhotoForm,
+    ItemForm,
+    ItemPhotoForm,
+    validate_image_size,
+)
 from .models import Item, ItemAction, ItemPhoto
 
 
@@ -261,7 +269,51 @@ class ItemUpdateView(
     def get_context_data(self, **kwargs: str) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["page_title"] = "Edit item"
+        context["photo_accept"] = ALLOWED_IMAGE_ACCEPT
         return context
+
+    def form_valid(self, form: ItemForm) -> HttpResponse:
+        response = super().form_valid(form)
+        self._process_uploaded_photos()
+        _add_message_safe(self.request, messages.SUCCESS, "Changes saved.")
+        return response
+
+    def _process_uploaded_photos(self) -> None:
+        """Save any new photos uploaded alongside the edit form."""
+        uploaded_files = self.request.FILES.getlist("new_photos")
+        if not uploaded_files:
+            return
+
+        item: Item = self.object
+        remaining_slots = 5 - item.photos.count()
+
+        ext_validator = FileExtensionValidator(
+            allowed_extensions=ALLOWED_IMAGE_EXTENSIONS
+        )
+        skipped = 0
+
+        for upload in uploaded_files[:remaining_slots]:
+            try:
+                ext_validator(upload)
+                validate_image_size(upload)
+            except Exception:
+                skipped += 1
+                continue
+            ItemPhoto.objects.create(item=item, image=upload)
+
+        if skipped:
+            _add_message_safe(
+                self.request,
+                messages.WARNING,
+                f"{skipped} photo(s) were skipped — invalid format or over 5 MB.",
+            )
+        over_limit = len(uploaded_files) - remaining_slots
+        if over_limit > 0:
+            _add_message_safe(
+                self.request,
+                messages.WARNING,
+                f"{over_limit} photo(s) were skipped — photo limit (5) reached.",
+            )
 
     def get_success_url(self) -> str:
         if self.object is None:
@@ -318,6 +370,10 @@ class ItemPhotoDeleteView(
 
     def get_permission_object(self):  # type: ignore[no-untyped-def]
         return self.get_object().item
+
+    def form_valid(self, form: ModelForm[ItemPhoto]) -> HttpResponse:
+        _add_message_safe(self.request, messages.SUCCESS, "Photo deleted.")
+        return super().form_valid(form)
 
     def get_success_url(self) -> str:
         instance: ItemPhoto = self.object

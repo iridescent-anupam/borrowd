@@ -25,11 +25,16 @@ class ItemForm(forms.ModelForm[Item]):
     class Meta:
         model = Item
         fields = ["name", "description", "categories", "trust_level_required"]
+        labels = {
+            "name": "Item name",
+        }
+
         widgets = {
             "name": forms.TextInput(
                 attrs={
                     "class": "input input-bordered w-full bg-primary-content",
                     "placeholder": "Drill, stepladder, etc...",
+                    "maxlength": "40",
                 }
             ),
             "description": forms.Textarea(
@@ -37,6 +42,7 @@ class ItemForm(forms.ModelForm[Item]):
                     "rows": 4,
                     "class": "textarea textarea-bordered w-full resize-y bg-primary-content",
                     "placeholder": "Enter a detailed description of your item...",
+                    "maxlength": "250",
                 }
             ),
             "trust_level_required": forms.Select(

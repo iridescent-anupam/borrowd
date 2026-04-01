@@ -133,7 +133,11 @@ def refresh_permissions_on_membership_update(
     membership = instance
 
     # Handle Group permissions
-    all_group_perms = [BorrowdGroupOLP.VIEW, BorrowdGroupOLP.EDIT, BorrowdGroupOLP.DELETE,]
+    all_group_perms = [
+        BorrowdGroupOLP.VIEW,
+        BorrowdGroupOLP.EDIT,
+        BorrowdGroupOLP.DELETE,
+    ]
     moderator_perms = [
         BorrowdGroupOLP.EDIT,
         BorrowdGroupOLP.DELETE,
