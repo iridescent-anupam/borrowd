@@ -44,7 +44,7 @@ class Profile(models.Model):
         blank=True,
     )
     bio: models.CharField[str, str] = models.CharField(
-        max_length=120, blank=True, default=""
+        max_length=200, blank=True, default=""
     )
 
     def full_name(self) -> str:
