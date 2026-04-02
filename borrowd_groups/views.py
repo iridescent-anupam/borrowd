@@ -384,6 +384,13 @@ class GroupUpdateView(
             form.instance.updated_by_id = self.request.user.pk  # type: ignore[attr-defined]
         return super().form_valid(form)
 
+    def form_invalid(self, form: ModelForm[BorrowdGroup]) -> HttpResponse:
+        name_errors: list[str] = [str(error) for error in form.errors.get("name", [])]
+        if DUPLICATE_GROUP_NAME_ERROR in name_errors:
+            messages.error(self.request, DUPLICATE_GROUP_NAME_ERROR)
+
+        return super().form_invalid(form)
+
     def get_success_url(self) -> str:
         if self.object is None:
             return reverse("borrowd_groups:group-list")

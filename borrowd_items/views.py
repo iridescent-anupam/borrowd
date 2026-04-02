@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 from django.contrib import messages
 from django.contrib.messages.api import MessageFailure
@@ -17,7 +17,7 @@ from borrowd_permissions.mixins import (
     LoginOr404PermissionMixin,
 )
 from borrowd_permissions.models import ItemOLP
-from borrowd_users.models import BorrowdUser, SearchTerm, SearchTarget
+from borrowd_users.models import BorrowdUser, SearchTarget, SearchTerm
 
 from .card_helpers import (
     build_item_card_context,
@@ -215,17 +215,16 @@ class ItemListView(
     template_name_suffix = "_list"  # Reusing template from ListView
     filterset_class = ItemFilter
 
-    def get(
-        self, request: HttpRequest, *args: Any, **kwargs: Any
-    ) -> HttpResponse:
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         term = request.GET.get("search")
         if term is not None:
             SearchTerm.record_search(
-                user=request.user,
+                # cast to make mypy happy; request.user is actually a BorrowdUser
                 target=SearchTarget.ITEMS,
+                user=cast(BorrowdUser, request.user),
                 term=term,
             )
-        return super().get(request, *args, **kwargs)
+        return cast(HttpResponse, super().get(request, *args, **kwargs))
 
     def get_queryset(self):  # type: ignore[no-untyped-def]
         queryset = super().get_queryset()

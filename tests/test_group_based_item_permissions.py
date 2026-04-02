@@ -172,7 +172,10 @@ class GroupBasedItemPermissionsTests(TestCase):
 
         ## Create a group
         group: BorrowdGroup = BorrowdGroup.objects.create(
-            name="Test Group", created_by=moderator, updated_by=moderator
+            name="Test Group",
+            created_by=moderator,
+            updated_by=moderator,
+            membership_requires_approval=False,
         )
 
         ## Create an item, owned by *Member*
@@ -434,5 +437,6 @@ class GroupBasedItemPermissionsTests(TestCase):
         ## because of group2
         self.assertTrue(member.has_perm(ItemOLP.VIEW, item))
         self.assertTrue(
-            ItemOLP.VIEW in get_perms(Group.objects.get(name=group2.name), item)
+            ItemOLP.VIEW
+            in get_perms(Group.objects.get(name=f"{group2.name}_user_{owner.pk}"), item)
         )
