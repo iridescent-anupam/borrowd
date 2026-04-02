@@ -1,62 +1,18 @@
-from typing import Any, cast
-
 from django import forms
-from django.contrib.auth.models import AnonymousUser
-from django.core.exceptions import ValidationError
 
 from borrowd.models import TrustLevel
 from borrowd_groups.models import BorrowdGroup
-from borrowd_users.models import BorrowdUser
 
 DUPLICATE_GROUP_NAME_ERROR = "You already have a group with this name."
 
 
-class GroupCreateForm(forms.ModelForm[BorrowdGroup]):
-    user: BorrowdUser | AnonymousUser | None
-
-    trust_level = forms.ChoiceField(
-        choices=sorted(TrustLevel.choices, reverse=True),
-        required=True,
-        label="How trusted should this group be?",
-        initial=TrustLevel.HIGH,
-        widget=forms.Select(
-            attrs={
-                "class": "block py-[10.5px] pl-3 appearance-none w-full box-border",
-            }
-        ),
-    )
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        self.user = cast(BorrowdUser | AnonymousUser | None, kwargs.pop("user", None))
-        super().__init__(*args, **kwargs)
-
-    def clean_name(self) -> str:
-        name = cast(str, self.cleaned_data["name"])
-
-        if not isinstance(self.user, BorrowdUser):
-            return name
-
-        duplicate_exists = (
-            BorrowdGroup.objects.filter(
-                created_by=self.user,
-                name=name,
-            )
-            .exclude(pk=self.instance.pk)
-            .exists()
-        )
-
-        if duplicate_exists:
-            raise ValidationError(DUPLICATE_GROUP_NAME_ERROR)
-
-        return name
-
+class BorrowdGroupForm(forms.ModelForm[BorrowdGroup]):
     class Meta:
         model = BorrowdGroup
 
         fields = [
             "name",
             "description",
-            "trust_level",
             "banner",
             "membership_requires_approval",
         ]
@@ -81,7 +37,6 @@ class GroupCreateForm(forms.ModelForm[BorrowdGroup]):
                     "placeholder": "Enter a helpful description for your group",
                 }
             ),
-            "logo": forms.FileInput(attrs={"class": "hidden", "id": "logo-upload"}),
             "banner": forms.ClearableFileInput(
                 attrs={
                     "class": (
@@ -99,6 +54,33 @@ class GroupCreateForm(forms.ModelForm[BorrowdGroup]):
                 }
             ),
         }
+
+
+class GroupCreateForm(BorrowdGroupForm):
+    trust_level = forms.ChoiceField(
+        choices=sorted(TrustLevel.choices, reverse=True),
+        required=True,
+        label="What do you want your trust relationship with this group to be?",
+        initial=TrustLevel.STANDARD,
+        widget=forms.Select(
+            attrs={
+                "class": "block py-[10.5px] pl-3 appearance-none w-full box-border",
+            }
+        ),
+    )
+
+    class Meta(BorrowdGroupForm.Meta):
+        fields = [
+            "name",
+            "description",
+            "trust_level",
+            "banner",
+            "membership_requires_approval",
+        ]
+
+
+class GroupUpdateForm(BorrowdGroupForm):
+    pass
 
 
 class GroupJoinForm(forms.Form):

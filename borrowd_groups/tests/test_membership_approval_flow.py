@@ -49,6 +49,25 @@ class MembershipApprovalFlowTests(TestCase):
             403,
         )
 
+    def test_private_group_creator_stays_active_moderator(self) -> None:
+        group = BorrowdGroup.objects.create(
+            name="Moderator Group",
+            created_by=self.moderator,
+            updated_by=self.moderator,
+            membership_requires_approval=True,
+        )
+
+        group_creator_membership = Membership.objects.get(
+            user=self.moderator,
+            group=group,
+        )
+
+        self.assertEqual(group_creator_membership.status, MembershipStatus.ACTIVE)
+        self.assertTrue(group_creator_membership.is_moderator)
+        self.assertTrue(self.moderator.has_perm(BorrowdGroupOLP.VIEW, group))
+        self.assertTrue(self.moderator.has_perm(BorrowdGroupOLP.EDIT, group))
+        self.assertTrue(self.moderator.has_perm(BorrowdGroupOLP.DELETE, group))
+
     def test_non_private_group_still_auto_joins(self) -> None:
         group = BorrowdGroup.objects.create(
             name="Public Group",
@@ -128,14 +147,15 @@ class MembershipApprovalFlowTests(TestCase):
             updated_by=self.moderator,
             membership_requires_approval=True,
         )
-
-        group.membership_requires_approval = False  # type: ignore[assignment]
-        group.save(update_fields=["membership_requires_approval"])
+        BorrowdGroup.objects.filter(pk=group.pk).update(
+            membership_requires_approval=False
+        )
+        group.refresh_from_db()
         group.add_user(helper, trust_level=TrustLevel.STANDARD)
-
-        group.refresh_from_db()  # Ensure we have the latest state of the group
-        group.membership_requires_approval = True  # type: ignore[assignment]
-        group.save(update_fields=["membership_requires_approval"])
+        BorrowdGroup.objects.filter(pk=group.pk).update(
+            membership_requires_approval=True
+        )
+        group.refresh_from_db()
         membership = group.add_user(self.requester, trust_level=TrustLevel.STANDARD)
 
         self.client.force_login(helper)

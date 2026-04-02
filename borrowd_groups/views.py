@@ -1,5 +1,5 @@
 from collections import namedtuple
-from typing import Any, cast
+from typing import Any
 from urllib.parse import urlencode
 
 from django.contrib import messages
@@ -34,6 +34,7 @@ from .forms import (
     DUPLICATE_GROUP_NAME_ERROR,
     GroupCreateForm,
     GroupJoinForm,
+    GroupUpdateForm,
     UpdateTrustLevelForm,
 )
 from .models import BorrowdGroup, Membership, MembershipStatus
@@ -94,17 +95,12 @@ class InviteSigner:
 class GroupCreateView(
     LoginRequiredMixin,  # type: ignore[misc]
     BorrowdTemplateFinderMixin,
-    CreateView[BorrowdGroup, ModelForm[BorrowdGroup]],
+    CreateView[BorrowdGroup, GroupCreateForm],
 ):
     model = BorrowdGroup
     form_class = GroupCreateForm
 
-    def get_form_kwargs(self) -> dict[str, Any]:
-        kwargs = super().get_form_kwargs()
-        kwargs["user"] = self.request.user
-        return kwargs
-
-    def form_valid(self, form: ModelForm[BorrowdGroup]) -> HttpResponse:
+    def form_valid(self, form: GroupCreateForm) -> HttpResponse:
         if self.request.user.is_authenticated:
             form.instance.created_by_id = form.instance.updated_by_id = (  # type: ignore[attr-defined]
                 self.request.user.pk
@@ -117,7 +113,7 @@ class GroupCreateView(
 
         return super().form_valid(form)
 
-    def form_invalid(self, form: ModelForm[BorrowdGroup]) -> HttpResponse:
+    def form_invalid(self, form: GroupCreateForm) -> HttpResponse:
         name_errors: list[str] = [str(error) for error in form.errors.get("name", [])]
         if DUPLICATE_GROUP_NAME_ERROR in name_errors:
             messages.error(self.request, DUPLICATE_GROUP_NAME_ERROR)
@@ -349,13 +345,14 @@ class GroupListView(LoginRequiredMixin, FilterView):  # type: ignore[misc]
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         term = request.GET.get("search")
-        if term is not None and isinstance(request.user, BorrowdUser):
+        if term is not None:
+            user: BorrowdUser = request.user  # type: ignore[assignment]
             SearchTerm.record_search(
-                user=request.user,
+                user=user,
                 target=SearchTarget.GROUPS,
                 term=term,
             )
-        return cast(HttpResponse, super().get(request, *args, **kwargs))
+        return super().get(request, *args, **kwargs)  # type: ignore[no-any-return]
 
     def get_template_names(self) -> list[str]:
         if self.request.headers.get("HX-Request"):
@@ -373,18 +370,18 @@ class GroupListView(LoginRequiredMixin, FilterView):  # type: ignore[misc]
 class GroupUpdateView(
     LoginOr404PermissionMixin,
     BorrowdTemplateFinderMixin,
-    UpdateView[BorrowdGroup, ModelForm[BorrowdGroup]],
+    UpdateView[BorrowdGroup, GroupUpdateForm],
 ):
     model = BorrowdGroup
     permission_required = BorrowdGroupOLP.EDIT
-    fields = ["name", "description", "logo", "banner", "membership_requires_approval"]
+    form_class = GroupUpdateForm
 
-    def form_valid(self, form: ModelForm[BorrowdGroup]) -> HttpResponse:
+    def form_valid(self, form: GroupUpdateForm) -> HttpResponse:
         if self.request.user.is_authenticated:
             form.instance.updated_by_id = self.request.user.pk  # type: ignore[attr-defined]
         return super().form_valid(form)
 
-    def form_invalid(self, form: ModelForm[BorrowdGroup]) -> HttpResponse:
+    def form_invalid(self, form: GroupUpdateForm) -> HttpResponse:
         name_errors: list[str] = [str(error) for error in form.errors.get("name", [])]
         if DUPLICATE_GROUP_NAME_ERROR in name_errors:
             messages.error(self.request, DUPLICATE_GROUP_NAME_ERROR)

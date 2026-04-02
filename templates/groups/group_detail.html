@@ -1,7 +1,7 @@
-{% extends "groups/layout.html" %} {% block head_title %}Group Details{%
+{% extends "groups/layout.html" %} {% block head_title %} Group Details{%
 endblock %} {% block groups_content %}
 
-<c-h1 class="text-2xl mb-4 font-medium text-center">{{ object.name }}</c-h1>
+<c-h1 class="text-2xl mb-4 font-medium text-center"> Group details </c-h1>
 <c-box class="mb-4 p-[10px] bg-primary-content!">
   {% if object.banner %}
   <div class="mb-4">
@@ -18,14 +18,14 @@ endblock %} {% block groups_content %}
       {% if object.logo %}
       <c-thumbnail src="{{ object.logo.url }}" alt="{{ object.name }} Logo" />
       <span class="pl-2 flex items-center">
-        <c-h1 class="text-base md:text-lg font-semibold line-clamp-2"
-          >{{ object.name }}</c-h1
-        >
+        <c-h1 class="text-base md:text-lg font-semibold line-clamp-2">
+          {{ object.name }}
+        </c-h1>
       </span>
       {% else %}
-      <c-h1 class="text-base md:text-lg font-semibold line-clamp-2"
-        >{{ object.name }}</c-h1
-      >
+      <c-h1 class="text-base md:text-lg font-semibold line-clamp-2">
+        {{ object.name }}
+      </c-h1>
       {% endif %}
     </div>
     <p class="justify-center text-sm font-normal leading-tight mt-1">
@@ -34,27 +34,10 @@ endblock %} {% block groups_content %}
 
     {% if user_trust_level %}
     <div class="mt-4 flex items-center gap-2">
-      <div
-        class="text-sm font-normal underline underline-offset-2 decoration-dotted bg-base-content/60 bg-clip-text text-transparent"
-      >
-        Trust level:
-      </div>
-
-      {% if user_trust_level == 2 %}
-      <div
-        class="badge badge-success badge-soft font-medium text-xs border-xl p-3"
-      >
-        High Trust
-      </div>
-      {% elif user_trust_level == 1 %}
-      <div class="badge badge-soft font-medium text-xs border-xl p-3">
-        Standard Trust
-      </div>
-      {% endif %}
-
-      <span class="inline-flex [&>svg]:w-5 [&>svg]:h-5">
-        {% include "icons/information-circle.svg" %}
-      </span>
+      <c-groups.trust-level-editor
+        :trust_level="user_trust_level"
+        :group_id="object.pk"
+      />
     </div>
     {% endif %}
 
@@ -145,4 +128,13 @@ endblock %} {% block groups_content %}
   </a>
   {% endif %}
 </div>
+
+<c-modal
+  modal_id="trust-level-info-modal"
+  modal_title="Group trust levels"
+  modal_size="full"
+  cancel_button_text="Got it"
+>
+  {% include "groups/_trust_level_info_modal_content.html" %}
+</c-modal>
 {% endblock %}

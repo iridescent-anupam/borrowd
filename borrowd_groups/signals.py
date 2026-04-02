@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any
 
 from django.contrib.auth.models import Group
 from django.db.models.query import QuerySet
@@ -32,9 +32,9 @@ def maintain_perms_group_on_borrowd_group_change(
     # group onto the borrowd group, because we need to maintain this linkage
     # even if the name changes
     if created:
-        creator = cast(BorrowdUser, instance.created_by)
+        creator = instance.created_by
         perms_group = Group.objects.create(
-            name=compute_per_group_unique_name(instance.name, creator.pk)
+            name=compute_per_group_unique_name(instance.name, creator.pk)  # type: ignore[attr-defined]
         )
         instance.perms_group = perms_group
         instance.save()
@@ -42,10 +42,10 @@ def maintain_perms_group_on_borrowd_group_change(
     # on update, make sure that the names still match
     else:
         perms_group = instance.perms_group
-        creator = cast(BorrowdUser, instance.created_by)
+        creator = instance.created_by
         perms_group_name = compute_per_group_unique_name(
             instance.name,
-            creator.pk,
+            creator.pk,  # type: ignore[attr-defined]
         )
         if perms_group.name != perms_group_name:
             perms_group.name = perms_group_name
@@ -145,13 +145,17 @@ def refresh_permissions_on_membership_update(
     # Handle Item permissions
     #
     user = instance.user
-    borrowd_group = cast(BorrowdGroup, instance.group)
-    group = borrowd_group.perms_group
+    borrowd_group = instance.group
+    group = borrowd_group.perms_group  # type: ignore[attr-defined]
     new_trust_level = instance.trust_level
     membership = instance
 
     # Handle Group permissions
-    all_group_perms = [BorrowdGroupOLP.VIEW, BorrowdGroupOLP.EDIT, BorrowdGroupOLP.DELETE,]
+    all_group_perms = [
+        BorrowdGroupOLP.VIEW,
+        BorrowdGroupOLP.EDIT,
+        BorrowdGroupOLP.DELETE,
+    ]
     moderator_perms = [
         BorrowdGroupOLP.EDIT,
         BorrowdGroupOLP.DELETE,
@@ -160,7 +164,7 @@ def refresh_permissions_on_membership_update(
 
     if membership.status == MembershipStatus.ACTIVE:
         # Keep auth group membership in sync with ACTIVE status.
-        user.groups.add(group)
+        user.groups.add(group)  # type: ignore[attr-defined]
 
         # Get all items associated with the group
         items_requiring_higher_trust = Item.objects.filter(
@@ -185,7 +189,7 @@ def refresh_permissions_on_membership_update(
         for group_perm in member_perms:
             assign_perm(group_perm, user, borrowd_group)
     else:
-        user.groups.remove(group)
+        user.groups.remove(group)  # type: ignore[attr-defined]
         for group_perm in all_group_perms:
             remove_perm(group_perm, user, borrowd_group)
         for item_perm in [ItemOLP.VIEW]:  # will have more later

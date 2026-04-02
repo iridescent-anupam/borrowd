@@ -23,13 +23,13 @@
   <div
     class="flex items-center gap-3 px-2.5 py-2.5 bg-white {% if not forloop.last %}border-b border-gray-200{% endif %}"
   >
-    <!-- Group Logo -->
+    <!-- Group Banner -->
     <div class="flex-shrink-0 w-12 h-12 overflow-hidden rounded-md">
-      {% if membership.group.logo %}
+      {% if membership.group.banner %}
       <img
         class="w-full h-full object-cover"
-        src="{{ membership.group.logo.url }}"
-        alt="{{ membership.group.name }} Logo"
+        src="{{ membership.group.banner.url }}"
+        alt="{{ membership.group.name }} Banner"
       />
       {% else %}
       <div class="w-full h-full bg-gray-200 flex items-center justify-center">
@@ -85,16 +85,27 @@
     </div>
 
     <!-- Member Count -->
-    <div class="text-base font-semibold text-base-content-scale-50 text-right w-5">
+    <div
+      class="text-base font-semibold text-base-content-scale-50 text-right w-5"
+    >
       {{ membership.group.users.count }}
     </div>
   </div>
   {% empty %}
   <div class="flex flex-col gap-5 items-center px-4 py-12">
     {% load static %}
-    <img src="{% static 'groups/Groups_2.PNG' %}" alt="Create a group" class="w-72 h-auto">
-    <p class="text-base text-base-content text-center leading-normal">Add a group to start sharing and borrowing items</p>
-    <c-button-nav url="{% url 'borrowd_groups:group-create' %}" class="btn btn-primary btn-lg">
+    <img
+      src="{% static 'groups/Groups_2.PNG' %}"
+      alt="Create a group"
+      class="w-72 h-auto"
+    />
+    <p class="text-base text-base-content text-center leading-normal">
+      Add a group to start sharing and borrowing items
+    </p>
+    <c-button-nav
+      url="{% url 'borrowd_groups:group-create' %}"
+      class="btn btn-primary btn-lg"
+    >
       Create a group
     </c-button-nav>
   </div>
