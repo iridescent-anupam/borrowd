@@ -2,8 +2,6 @@ from django.db import migrations
 from django.db.backends.base.schema import BaseDatabaseSchemaEditor
 from django.db.migrations.state import StateApps
 
-from borrowd_groups.signals import compute_per_group_unique_name
-
 
 def backfill_group_creator_moderator_memberships(
     apps: StateApps, schema_editor: BaseDatabaseSchemaEditor
@@ -37,9 +35,7 @@ def backfill_group_creator_moderator_memberships(
 
         if existing_borrowd_group.perms_group is None:
             permissions_group_for_borrowd_group, _ = Group.objects.get_or_create(
-                name=compute_per_group_unique_name(
-                    existing_borrowd_group.name, group_creator_user.pk
-                )
+                name=existing_borrowd_group.name
             )
             existing_borrowd_group.perms_group = permissions_group_for_borrowd_group
             existing_borrowd_group.save(update_fields=["perms_group"])

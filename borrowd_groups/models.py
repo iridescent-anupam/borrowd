@@ -165,15 +165,12 @@ class BorrowdGroup(Model):
             is_moderator=is_moderator,
         )
 
-        user.groups.add(self.perms_group)
-
         return membership
 
     def remove_user(self, user: BorrowdUser) -> None:
         """
         Remove a user from the group.
         """
-        user.groups.remove(self.perms_group)
         Membership.objects.get(user=user, group=self).delete()
 
     def update_user_membership(
