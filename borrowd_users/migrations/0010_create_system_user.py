@@ -5,11 +5,13 @@ from django.db import migrations
 from django.db.backends.base.schema import BaseDatabaseSchemaEditor
 from django.db.migrations.state import StateApps
 
+from borrowd_users.system import SYSTEM_USER_USERNAME
+
 
 def create_system_user(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor):
     BorrowdUser = apps.get_model("borrowd_users", "BorrowdUser")
     BorrowdUser.objects.get_or_create(
-        username="system",
+        username=SYSTEM_USER_USERNAME,
         defaults={
             "password": make_password(None),
             "first_name": "System",
