@@ -1,9 +1,12 @@
 from django.urls import path
-from .views import onboarding_step1
-from .views import onboarding_step2
-from .views import onboarding_step3
-from .views import onboarding_complete
+
 from . import views
+from .views import (
+    onboarding_complete,
+    onboarding_step1,
+    onboarding_step2,
+    onboarding_step3,
+)
 
 urlpatterns = [
     path("", views.index, name="index"),

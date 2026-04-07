@@ -8,7 +8,6 @@ from borrowd_users.models import BorrowdUser
 
 DUPLICATE_GROUP_NAME_ERROR = "You already have a group with this name."
 
-
 class BorrowdGroupForm(forms.ModelForm[BorrowdGroup]):
     user: BorrowdUser | None
 

@@ -2,7 +2,7 @@ from django.test import RequestFactory, TestCase
 
 from borrowd_groups.views import GroupListView
 from borrowd_items.views import ItemListView
-from borrowd_users.models import BorrowdUser, SearchTerm, SearchTarget
+from borrowd_users.models import BorrowdUser, SearchTarget, SearchTerm
 
 
 class SearchTermLoggingTests(TestCase):

@@ -88,3 +88,6 @@ coverage.xml
 
 # Cursor #
 .cursorrules
+
+# macOS
+.DS_Store

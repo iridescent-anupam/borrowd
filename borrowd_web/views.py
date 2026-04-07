@@ -1,9 +1,8 @@
 from django.conf import settings
-from django.http import FileResponse, HttpRequest, HttpResponse
-from django.template import loader
-from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect
+from django.http import FileResponse, HttpRequest, HttpResponse
+from django.shortcuts import redirect, render
+from django.template import loader
 
 
 def favicon(request: HttpRequest) -> FileResponse:
