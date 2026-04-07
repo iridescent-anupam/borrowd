@@ -102,7 +102,7 @@ class UsersLeavingGroupsTests(TestCase):
             Membership.objects.filter(user=self.owner, group=self.group).exists()
         )
 
-    def test_member_with_active_transaction_cannot_leave_group(self) -> None:
+    def test_member_with_active_transaction_in_group_cannot_leave_group(self) -> None:
         # Arrange
         # Create an item and an active transaction involving the member.
         category = ItemCategory.objects.create(
@@ -133,7 +133,7 @@ class UsersLeavingGroupsTests(TestCase):
         )
 
         # Assert
-        # Members with active transactions must stay in the group until
+        # Members with active transactions in the group must stay in the group until
         # those transactions are resolved.
         self.assertRedirects(
             response,
@@ -141,4 +141,98 @@ class UsersLeavingGroupsTests(TestCase):
         )
         self.assertTrue(
             Membership.objects.filter(user=self.member, group=self.group).exists()
+        )
+
+    def test_member_with_active_transaction_outside_group_can_leave_group(self) -> None:
+        # Arrange
+        # Create an item owned by a user who is not a member of this group.
+        # This transaction is active, but it should not count as active
+        # in the group the member is trying to leave.
+        category = ItemCategory.objects.create(
+            name="Tools Outside Group",
+            description="Tools category outside the group",
+        )
+        item = Item.objects.create(
+            name="Saw",
+            description="Hand saw",
+            owner=self.other_user,
+            trust_level_required=TrustLevel.STANDARD,
+        )
+        item.categories.add(category)
+
+        Transaction.objects.create(
+            item=item,
+            party1=self.other_user,
+            party2=self.member,
+            status=TransactionStatus.REQUESTED,
+            updated_by=self.member,
+        )
+
+        self.client.force_login(self.member)
+
+        # Act
+        response = self.client.post(
+            reverse("borrowd_groups:leave-group", args=[self.group.pk])
+        )
+
+        # Assert
+        # The member should still be able to leave this group because
+        # the active transaction is not in this group context.
+        self.assertRedirects(response, reverse("borrowd_groups:group-list"))
+        self.assertFalse(
+            Membership.objects.filter(user=self.member, group=self.group).exists()
+        )
+
+    def test_member_with_active_transaction_in_different_group_can_leave_group(
+        self,
+    ) -> None:
+        # Arrange
+        # Create a second group that includes the member and other_user.
+        # The active transaction belongs to that shared group context,
+        # not to the original group the member is trying to leave.
+        other_group = BorrowdGroup.objects.create(
+            name="Other Group",
+            created_by=self.other_user,
+            updated_by=self.other_user,
+            trust_level=TrustLevel.STANDARD,
+            membership_requires_approval=False,
+        )
+        other_group.add_user(self.member, trust_level=TrustLevel.STANDARD)
+
+        category = ItemCategory.objects.create(
+            name="Other Group Tools",
+            description="Tools category in another group context",
+        )
+        item = Item.objects.create(
+            name="Ladder",
+            description="Foldable ladder",
+            owner=self.other_user,
+            trust_level_required=TrustLevel.STANDARD,
+        )
+        item.categories.add(category)
+
+        Transaction.objects.create(
+            item=item,
+            party1=self.other_user,
+            party2=self.member,
+            status=TransactionStatus.REQUESTED,
+            updated_by=self.member,
+        )
+
+        self.client.force_login(self.member)
+
+        # Act
+        response = self.client.post(
+            reverse("borrowd_groups:leave-group", args=[self.group.pk])
+        )
+
+        # Assert
+        # The member should be able to leave the original group because
+        # the active transaction belongs to a different shared group context.
+        self.assertRedirects(response, reverse("borrowd_groups:group-list"))
+        self.assertFalse(
+            Membership.objects.filter(user=self.member, group=self.group).exists()
+        )
+        self.assertTrue(
+            Membership.objects.filter(user=self.member, group=other_group).exists()
         )

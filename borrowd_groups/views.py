@@ -65,12 +65,18 @@ def get_members_data(group: BorrowdGroup) -> list[dict[str, Any]]:
     return members_data
 
 
-def user_has_active_transactions(user: BorrowdUser) -> bool:
+def user_has_active_transactions_in_group(
+    user: BorrowdUser, group: BorrowdGroup
+) -> bool:
     """
-    Helper function returns True if the user is involved in any active transaction.
+    Return True if the user is involved in any active transaction
+    where both parties are active members of the given group.
+    """
+    active_group_member_ids = Membership.objects.filter(
+        group=group,
+        status=MembershipStatus.ACTIVE,
+    ).values_list("user_id", flat=True)
 
-    Active transactions are borrowing flows that are not yet fully resolved.
-    """
     return Transaction.objects.filter(
         Q(party1=user) | Q(party2=user),
         status__in=[
@@ -80,6 +86,8 @@ def user_has_active_transactions(user: BorrowdUser) -> bool:
             TransactionStatus.COLLECTED,
             TransactionStatus.RETURN_ASSERTED,
         ],
+        party1_id__in=active_group_member_ids,
+        party2_id__in=active_group_member_ids,
     ).exists()
 
 
@@ -564,8 +572,8 @@ class LeaveGroupView(LoginRequiredMixin, View):  # type: ignore[misc]
             messages.error(request, "You are not a member of this group.")
             return redirect("borrowd_groups:group-detail", pk=pk)
 
-        # Block leaving while the user has active transactions.
-        if user_has_active_transactions(request.user):  # type: ignore[arg-type]
+        # Block leaving while the user has active transactions within the group.
+        if user_has_active_transactions_in_group(request.user, group):  # type: ignore[arg-type]
             messages.error(
                 request,
                 "You cannot leave a group while you have active transactions.",
