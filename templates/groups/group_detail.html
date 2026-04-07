@@ -138,6 +138,57 @@
             {% endif %}
         </div>
 
+        <form id="leave-group-form"
+              method="post"
+              action="{% url 'borrowd_groups:leave-group' object.pk %}"
+              class="hidden">
+            {% csrf_token %}
+        </form>
+
+        <c-modal modal_id="leave-group-confirm-modal"
+                 modal_title="Are you sure you want to leave this group?"
+                 cancel_button_text="Cancel"
+                 confirm_button_text="Leave group"
+                 confirm_submit_form_id="leave-group-form"
+                 button_layout="end"
+                 cancel_button_class="btn btn-ghost font-semibold"
+                 confirm_button_class="btn btn-error btn-soft font-semibold transition-none hover:scale-100">
+            <p class="text-base leading-8">
+                You will need to request approval to re-join this group.
+            </p>
+        </c-modal>
+
+        <c-modal modal_id="leave-group-moderator-modal"
+                 modal_title="You’re the group moderator. Are you sure you want to leave?"
+                 cancel_button_text="Cancel"
+                 confirm_button_text="Leave group"
+                 button_layout="end"
+                 cancel_button_class="btn btn-ghost font-semibold"
+                 confirm_button_class="btn btn-error btn-soft font-semibold transition-none hover:scale-100"
+                 confirm_button_disabled_expression="true">
+            <p class="text-base leading-8">
+                If you leave, another member will need to take over as moderator before new members can join this group.
+            </p>
+        </c-modal>
+
+        <c-modal modal_id="leave-group-borrower-modal"
+                 modal_title="You’re currently borrowing items"
+                 cancel_button_text="Got it"
+                 cancel_button_class="btn btn-ghost font-semibold">
+            <p class="text-base leading-8">
+                To leave this group, you’ll need to return the items you’ve borrowed. Once the owner confirms the return, you’ll be able to leave this group.
+            </p>
+        </c-modal>
+
+        <c-modal modal_id="leave-group-lender-modal"
+                 modal_title="You’re currently lending items"
+                 cancel_button_text="Got it"
+                 cancel_button_class="btn btn-ghost font-semibold">
+            <p class="text-base leading-8">
+                To leave this group, confirm the return of your items.
+            </p>
+        </c-modal>
+
         <c-modal modal_id="trust-level-info-modal"
                  modal_title="Group trust levels"
                  modal_size="full"
