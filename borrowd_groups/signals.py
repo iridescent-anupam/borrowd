@@ -144,9 +144,15 @@ def refresh_permissions_on_membership_update(
     #
     # Handle Item permissions
     #
-    user = instance.user
+
+    user: BorrowdUser = instance.user  # type: ignore[assignment]
     borrowd_group: BorrowdGroup = instance.group  # type: ignore[assignment]
     group = borrowd_group.perms_group
+    if group is None:
+        # This should never happen, but just in case...
+        raise ValueError(
+            "This BorrowdGroup has no perms_group; cannot sync permissions."
+        )
     new_trust_level = instance.trust_level
     membership = instance
 
@@ -164,7 +170,7 @@ def refresh_permissions_on_membership_update(
 
     if membership.status == MembershipStatus.ACTIVE:
         # Keep auth group membership in sync with ACTIVE status.
-        user.groups.add(group)  # type: ignore[attr-defined]
+        user.groups.add(group)
 
         # Get all items associated with the group
         items_requiring_higher_trust = Item.objects.filter(
@@ -189,7 +195,7 @@ def refresh_permissions_on_membership_update(
         for group_perm in member_perms:
             assign_perm(group_perm, user, borrowd_group)
     else:
-        user.groups.remove(group)  # type: ignore[attr-defined]
+        user.groups.remove(group)
         for group_perm in all_group_perms:
             remove_perm(group_perm, user, borrowd_group)
         for item_perm in [ItemOLP.VIEW]:  # will have more later
