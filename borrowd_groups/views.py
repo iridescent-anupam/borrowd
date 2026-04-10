@@ -87,9 +87,6 @@ def user_has_active_transactions_in_group(
     return Transaction.objects.filter(
         Q(party1=user) | Q(party2=user),
         status__in=[
-            TransactionStatus.REQUESTED,
-            TransactionStatus.ACCEPTED,
-            TransactionStatus.COLLECTION_ASSERTED,
             TransactionStatus.COLLECTED,
             TransactionStatus.RETURN_ASSERTED,
         ],
@@ -108,9 +105,6 @@ def user_has_active_borrows_in_group(user: BorrowdUser, group: BorrowdGroup) -> 
     return Transaction.objects.filter(
         party2=user,
         status__in=[
-            TransactionStatus.REQUESTED,
-            TransactionStatus.ACCEPTED,
-            TransactionStatus.COLLECTION_ASSERTED,
             TransactionStatus.COLLECTED,
             TransactionStatus.RETURN_ASSERTED,
         ],
@@ -129,9 +123,6 @@ def user_has_active_lends_in_group(user: BorrowdUser, group: BorrowdGroup) -> bo
     return Transaction.objects.filter(
         party1=user,
         status__in=[
-            TransactionStatus.REQUESTED,
-            TransactionStatus.ACCEPTED,
-            TransactionStatus.COLLECTION_ASSERTED,
             TransactionStatus.COLLECTED,
             TransactionStatus.RETURN_ASSERTED,
         ],

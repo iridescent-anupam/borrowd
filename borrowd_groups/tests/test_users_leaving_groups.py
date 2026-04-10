@@ -13,7 +13,7 @@ class UsersLeavingGroupsTests(TestCase):
 
     Standard members can leave a group.
     Moderators cannot leave through this flow.
-    Members with active transactions cannot leave.
+    Members with actively borrowed items cannot leave.
 
     Moderator handoff flow belong to later iterations once that functionality exists.
     """
@@ -121,7 +121,7 @@ class UsersLeavingGroupsTests(TestCase):
             item=item,
             party1=self.owner,
             party2=self.member,
-            status=TransactionStatus.REQUESTED,
+            status=TransactionStatus.COLLECTED,
             updated_by=self.member,
         )
 
@@ -140,6 +140,41 @@ class UsersLeavingGroupsTests(TestCase):
             reverse("borrowd_groups:group-detail", args=[self.group.pk]),
         )
         self.assertTrue(
+            Membership.objects.filter(user=self.member, group=self.group).exists()
+        )
+
+    def test_member_with_requested_transaction_in_group_can_leave_group(self) -> None:
+        # Arrange
+        category = ItemCategory.objects.create(
+            name="Requested Tools",
+            description="Requested tools category",
+        )
+        item = Item.objects.create(
+            name="Hose",
+            description="Garden hose",
+            owner=self.owner,
+            trust_level_required=TrustLevel.STANDARD,
+        )
+        item.categories.add(category)
+
+        Transaction.objects.create(
+            item=item,
+            party1=self.owner,
+            party2=self.member,
+            status=TransactionStatus.REQUESTED,
+            updated_by=self.member,
+        )
+
+        self.client.force_login(self.member)
+
+        # Act
+        response = self.client.post(
+            reverse("borrowd_groups:leave-group", args=[self.group.pk])
+        )
+
+        # Assert
+        self.assertRedirects(response, reverse("borrowd_groups:group-list"))
+        self.assertFalse(
             Membership.objects.filter(user=self.member, group=self.group).exists()
         )
 
