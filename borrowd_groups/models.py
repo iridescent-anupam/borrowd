@@ -22,10 +22,7 @@ from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFit
 
 from borrowd.models import TrustLevel
-from borrowd_groups.exceptions import (
-    ExistingMemberException,
-    ModeratorRequiredException,
-)
+from borrowd_groups.exceptions import ExistingMemberException
 from borrowd_permissions.models import BorrowdGroupOLP
 from borrowd_users.models import BorrowdUser
 
@@ -173,26 +170,8 @@ class BorrowdGroup(Model):
     def remove_user(self, user: BorrowdUser) -> None:
         """
         Remove a user from the group.
-
-        A group must always have at least one moderator.
         """
         membership: Membership = Membership.objects.get(user=user, group=self)
-
-        # Prevent the last moderator from being removed.
-        if membership.is_moderator:
-            other_moderators_exist = (
-                Membership.objects.filter(
-                    group=self,
-                    is_moderator=True,
-                )
-                .exclude(user=user)
-                .exists()
-            )
-
-            if not other_moderators_exist:
-                raise ModeratorRequiredException(
-                    "Cannot remove the last moderator from a group."
-                )
 
         # Remove the user's group membership.
         perms_group = Group.objects.get(name=self.name)
