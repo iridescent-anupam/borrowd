@@ -178,6 +178,61 @@ class UsersLeavingGroupsTests(TestCase):
             Membership.objects.filter(user=self.member, group=self.group).exists()
         )
 
+    def test_member_with_borrowed_item_and_other_shared_group_can_leave_group(
+        self,
+    ) -> None:
+        # Arrange
+        # The member and owner already share self.group.
+        # Add a second active shared group so they remain connected
+        # even after the member leaves the first group.
+        other_shared_group: BorrowdGroup = BorrowdGroup.objects.create(
+            name="Second Shared Group",
+            created_by=self.owner,
+            updated_by=self.owner,
+            trust_level=TrustLevel.STANDARD,
+            membership_requires_approval=False,
+        )
+        other_shared_group.add_user(self.member, trust_level=TrustLevel.STANDARD)
+
+        category = ItemCategory.objects.create(
+            name="Shared Group Tools",
+            description="Tools category",
+        )
+        item = Item.objects.create(
+            name="Ladder",
+            description="Foldable ladder",
+            owner=self.owner,
+            trust_level_required=TrustLevel.STANDARD,
+        )
+        item.categories.add(category)
+
+        Transaction.objects.create(
+            item=item,
+            party1=self.owner,
+            party2=self.member,
+            status=TransactionStatus.COLLECTED,
+            updated_by=self.member,
+        )
+
+        self.client.force_login(self.member)
+
+        # Act
+        response = self.client.post(
+            reverse("borrowd_groups:leave-group", args=[self.group.pk])
+        )
+
+        # Assert
+        self.assertRedirects(response, reverse("borrowd_groups:group-list"))
+        self.assertFalse(
+            Membership.objects.filter(user=self.member, group=self.group).exists()
+        )
+        self.assertTrue(
+            Membership.objects.filter(
+                user=self.member,
+                group=other_shared_group,
+            ).exists()
+        )
+
     def test_member_with_active_transaction_outside_group_can_leave_group(self) -> None:
         # Arrange
         # Create an item owned by a user who is not a member of this group.
