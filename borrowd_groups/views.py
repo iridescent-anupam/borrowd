@@ -277,6 +277,7 @@ class GroupDetailView(
             # Flags used to decide which leave-group modal to open.
             if context["user_trust_level"] is not None:
                 context["show_leave_group_button"] = True
+                context["leave_group_is_moderator"] = context["is_moderator"]
                 context["leave_group_has_active_borrows"] = (
                     user_has_active_borrows_in_group(user, group)
                 )
@@ -288,6 +289,7 @@ class GroupDetailView(
                 )
             else:
                 context["show_leave_group_button"] = False
+                context["leave_group_is_moderator"] = False
                 context["leave_group_has_active_borrows"] = False
                 context["leave_group_has_active_lends"] = False
                 context["leave_group_requires_approval_to_rejoin"] = False

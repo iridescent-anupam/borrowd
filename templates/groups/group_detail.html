@@ -103,7 +103,13 @@
 
         <div class="mt-2 pt-4 flex flex-col gap-2">
             {% if show_leave_group_button %}
-                {% if leave_group_has_active_borrows %}
+                {% if leave_group_is_moderator %}
+                    <button type="button"
+                            class="btn btn-soft text-primary w-full mt-4"
+                            onclick="showModal('leave-group-moderator-confirm-modal')">
+                        Leave group
+                    </button>
+                {% elif leave_group_has_active_borrows %}
                     <button type="button"
                             class="btn btn-soft text-primary w-full mt-4"
                             onclick="showModal('leave-group-borrower-modal')">
@@ -171,6 +177,22 @@
                  cancel_button_class="btn btn-ghost font-semibold">
             <p class="text-base leading-8">
                 Before you can leave, you must first confirm the return of any borrowed items.
+            </p>
+        </c-modal>
+
+        <c-modal modal_id="leave-group-moderator-confirm-modal"
+                 modal_title="You're the group moderator. Are you sure you want to leave?"
+                 cancel_button_text="Cancel"
+                 confirm_button_text="Leave group"
+                 confirm_submit_form_id="leave-group-form"
+                 button_layout="end"
+                 cancel_button_class="btn btn-ghost font-semibold"
+                 confirm_button_class="btn btn-error btn-soft font-semibold transition-none hover:scale-100">
+            <p class="text-base leading-8">
+                If you leave, we'll ask another member of the group to take over as moderator.
+                {% if leave_group_requires_approval_to_rejoin %}
+                    Until someone accepts, new members won't be able to join the group.
+                {% endif %}
             </p>
         </c-modal>
 
