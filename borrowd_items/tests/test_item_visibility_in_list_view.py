@@ -33,12 +33,16 @@ class ItemListViewVisibilityTests(TestCase):
             name="Item 1",
             description="Description 1",
             owner=owner,
+            created_by=owner,
+            updated_by=owner,
             trust_level_required=TrustLevel.STANDARD,
         )
         item2 = Item.objects.create(
             name="Item 2",
             description="Description 2",
             owner=owner,
+            created_by=owner,
+            updated_by=owner,
             trust_level_required=TrustLevel.STANDARD,
         )
 
@@ -86,6 +90,8 @@ class ItemListViewVisibilityTests(TestCase):
             name="Item 1",
             description="Description 1",
             owner=owner,
+            created_by=owner,
+            updated_by=owner,
             trust_level_required=TrustLevel.STANDARD,
         )
 
@@ -134,12 +140,16 @@ class ItemListViewVisibilityTests(TestCase):
             name="Item 1",
             description="Description 1",
             owner=owner,
+            created_by=owner,
+            updated_by=owner,
             trust_level_required=TrustLevel.STANDARD,
         )
         item2 = Item.objects.create(
             name="Item 1",
             description="Description 1",
             owner=member,
+            created_by=member,
+            updated_by=member,
             trust_level_required=TrustLevel.STANDARD,
         )
 
@@ -199,12 +209,16 @@ class ItemListViewVisibilityTests(TestCase):
             name="Item High",
             description="Description High",
             owner=owner,
+            created_by=owner,
+            updated_by=owner,
             trust_level_required=TrustLevel.HIGH,
         )
         item_low = Item.objects.create(
             name="Item Low",
             description="Description Low",
             owner=owner,
+            created_by=owner,
+            updated_by=owner,
             trust_level_required=TrustLevel.STANDARD,
         )
 
@@ -249,6 +263,8 @@ class ItemListViewVisibilityTests(TestCase):
             name="Owner Item",
             description="Owned by group owner.",
             owner=owner,
+            created_by=owner,
+            updated_by=owner,
             trust_level_required=TrustLevel.STANDARD,
         )
 
@@ -290,6 +306,8 @@ class ItemListViewVisibilityTests(TestCase):
             name="Owner Item",
             description="Owned by group owner.",
             owner=owner,
+            created_by=owner,
+            updated_by=owner,
             trust_level_required=TrustLevel.STANDARD,
         )
 

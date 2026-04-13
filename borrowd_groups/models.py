@@ -4,6 +4,7 @@ from django.contrib.auth.models import Group
 from django.db.models import (
     CASCADE,
     DO_NOTHING,
+    SET_NULL,
     BooleanField,
     CharField,
     DateTimeField,
@@ -128,6 +129,21 @@ class BorrowdGroup(Model):
     updated_at: DateTimeField[Never, Never] = DateTimeField(
         auto_now=True,
         help_text="The date and time at which the group was last updated.",
+    )
+    deleted_at: DateTimeField[Never, Never] = DateTimeField(
+        null=True,
+        blank=True,
+        default=None,
+        help_text="Set when the record is soft-deleted. NULL means active.",
+    )
+    deleted_by: ForeignKey[BorrowdUser] = ForeignKey(
+        BorrowdUser,
+        null=True,
+        blank=True,
+        default=None,
+        on_delete=SET_NULL,
+        related_name="+",
+        help_text="Who performed the soft-delete. NULL means active or unknown.",
     )
 
     # Override default manager to have custom `create()` method,

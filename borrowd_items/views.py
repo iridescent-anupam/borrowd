@@ -167,10 +167,17 @@ class ItemCreateView(
 
     def form_valid(self, form: ItemCreateWithPhotoForm) -> HttpResponse:
         form.instance.owner = self.request.user  # type: ignore[assignment]
+        form.instance.created_by = self.request.user  # type: ignore[assignment]
+        form.instance.updated_by = self.request.user  # type: ignore[assignment]
         response = super().form_valid(form)
         image = form.cleaned_data.get("image")
         if image:
-            ItemPhoto.objects.create(item=self.object, image=image)
+            ItemPhoto.objects.create(
+                item=self.object,
+                image=image,
+                created_by=self.request.user,
+                updated_by=self.request.user,
+            )
         return response
 
     def get_success_url(self) -> str:
@@ -273,6 +280,7 @@ class ItemUpdateView(
         return context
 
     def form_valid(self, form: ItemForm) -> HttpResponse:
+        form.instance.updated_by = self.request.user  # type: ignore[assignment]
         response = super().form_valid(form)
         self._process_uploaded_photos()
         _add_message_safe(self.request, messages.SUCCESS, "Changes saved.")
@@ -299,7 +307,12 @@ class ItemUpdateView(
             except Exception:
                 skipped += 1
                 continue
-            ItemPhoto.objects.create(item=item, image=upload)
+            ItemPhoto.objects.create(
+                item=item,
+                image=upload,
+                created_by=self.request.user,
+                updated_by=self.request.user,
+            )
 
         if skipped:
             _add_message_safe(
@@ -343,6 +356,8 @@ class ItemPhotoCreateView(
     def form_valid(self, form: ItemPhotoForm) -> HttpResponse:
         context = self.get_context_data()
         form.instance.item_id = context["item_pk"]
+        form.instance.created_by = self.request.user  # type: ignore[assignment]
+        form.instance.updated_by = self.request.user  # type: ignore[assignment]
         return super().form_valid(form)
 
     def get_success_url(self) -> str:
