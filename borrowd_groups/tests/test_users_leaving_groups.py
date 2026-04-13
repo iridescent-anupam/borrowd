@@ -12,10 +12,10 @@ class UsersLeavingGroupsTests(TestCase):
     Tests for the leave-group flow.
 
     Standard members can leave a group.
-    Moderators cannot leave through this flow.
+    Moderators can leave through this flow.
     Members with actively borrowed items cannot leave.
 
-    Moderator handoff flow belong to later iterations once that functionality exists.
+    Empty groups are deleted when the last active member leaves.
     """
 
     def setUp(self) -> None:
@@ -82,7 +82,7 @@ class UsersLeavingGroupsTests(TestCase):
             Membership.objects.filter(user=self.other_user, group=self.group).exists()
         )
 
-    def test_moderator_cannot_leave_group(self) -> None:
+    def test_moderator_can_leave_group(self) -> None:
         # Arrange
         # The owner is the group's default moderator.
         self.client.force_login(self.owner)
@@ -93,14 +93,38 @@ class UsersLeavingGroupsTests(TestCase):
         )
 
         # Assert
-        # Moderators are currently blocked from leaving through this flow.
-        self.assertRedirects(
-            response,
-            reverse("borrowd_groups:group-detail", args=[self.group.pk]),
-        )
-        self.assertTrue(
+        self.assertRedirects(response, reverse("borrowd_groups:group-list"))
+        self.assertFalse(
             Membership.objects.filter(user=self.owner, group=self.group).exists()
         )
+
+    def test_last_active_member_moderator_leave_deletes_group(self) -> None:
+        # Arrange
+        solo_owner = BorrowdUser.objects.create_user(
+            username="solo_owner",
+            password="password",
+        )
+        solo_group: BorrowdGroup = BorrowdGroup.objects.create(
+            name="Solo Group",
+            created_by=solo_owner,
+            updated_by=solo_owner,
+            trust_level=TrustLevel.STANDARD,
+            membership_requires_approval=False,
+        )
+
+        self.client.force_login(solo_owner)
+
+        # Act
+        response = self.client.post(
+            reverse("borrowd_groups:leave-group", args=[solo_group.pk])
+        )
+
+        # Assert
+        self.assertRedirects(response, reverse("borrowd_groups:group-list"))
+        self.assertFalse(
+            Membership.objects.filter(user=solo_owner, group=solo_group).exists()
+        )
+        self.assertFalse(BorrowdGroup.objects.filter(pk=solo_group.pk).exists())
 
     def test_member_with_active_transaction_in_group_cannot_leave_group(self) -> None:
         # Arrange
