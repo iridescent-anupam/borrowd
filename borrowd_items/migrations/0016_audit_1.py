@@ -4,28 +4,6 @@ import django.db.models.deletion
 import django.utils.timezone
 from django.conf import settings
 from django.db import migrations, models
-from django.db.backends.base.schema import BaseDatabaseSchemaEditor
-from django.db.migrations.state import StateApps
-
-from borrowd_users.system import SYSTEM_USER_USERNAME
-
-
-def backfill_audit_fields(
-    apps: StateApps, schema_editor: BaseDatabaseSchemaEditor
-) -> None:
-    BorrowdUser = apps.get_model("borrowd_users", "BorrowdUser")
-    system_user = BorrowdUser.objects.get(username=SYSTEM_USER_USERNAME)
-
-    Item = apps.get_model("borrowd_items", "Item")
-    Item.objects.filter(created_by_id=None).update(created_by_id=system_user.pk)
-    Item.objects.filter(updated_by_id=None).update(updated_by_id=system_user.pk)
-
-    ItemPhoto = apps.get_model("borrowd_items", "ItemPhoto")
-    ItemPhoto.objects.filter(created_by_id=None).update(created_by_id=system_user.pk)
-    ItemPhoto.objects.filter(updated_by_id=None).update(updated_by_id=system_user.pk)
-
-    Transaction = apps.get_model("borrowd_items", "Transaction")
-    Transaction.objects.filter(created_by_id=None).update(created_by_id=system_user.pk)
 
 
 class Migration(migrations.Migration):
@@ -227,69 +205,6 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(
                 null=True,
                 default=None,
-                help_text="The user who created the transaction.",
-                on_delete=django.db.models.deletion.DO_NOTHING,
-                related_name="+",
-                to=settings.AUTH_USER_MODEL,
-            ),
-            preserve_default=False,
-        ),
-        # step: backfill
-        migrations.RunPython(backfill_audit_fields, migrations.RunPython.noop),
-        # step: non-nullable
-        migrations.AlterField(
-            model_name="item",
-            name="created_by",
-            field=models.ForeignKey(
-                null=False,
-                help_text="The user who created the item.",
-                on_delete=django.db.models.deletion.DO_NOTHING,
-                related_name="+",
-                to=settings.AUTH_USER_MODEL,
-            ),
-            preserve_default=False,
-        ),
-        migrations.AlterField(
-            model_name="item",
-            name="updated_by",
-            field=models.ForeignKey(
-                null=False,
-                help_text="The last user who updated the item.",
-                on_delete=django.db.models.deletion.DO_NOTHING,
-                related_name="+",
-                to=settings.AUTH_USER_MODEL,
-            ),
-            preserve_default=False,
-        ),
-        migrations.AlterField(
-            model_name="itemphoto",
-            name="created_by",
-            field=models.ForeignKey(
-                null=False,
-                help_text="The user who created the item photo.",
-                on_delete=django.db.models.deletion.DO_NOTHING,
-                related_name="+",
-                to=settings.AUTH_USER_MODEL,
-            ),
-            preserve_default=False,
-        ),
-        migrations.AlterField(
-            model_name="itemphoto",
-            name="updated_by",
-            field=models.ForeignKey(
-                null=False,
-                help_text="The last user who updated the item photo.",
-                on_delete=django.db.models.deletion.DO_NOTHING,
-                related_name="+",
-                to=settings.AUTH_USER_MODEL,
-            ),
-            preserve_default=False,
-        ),
-        migrations.AlterField(
-            model_name="transaction",
-            name="created_by",
-            field=models.ForeignKey(
-                null=False,
                 help_text="The user who created the transaction.",
                 on_delete=django.db.models.deletion.DO_NOTHING,
                 related_name="+",
