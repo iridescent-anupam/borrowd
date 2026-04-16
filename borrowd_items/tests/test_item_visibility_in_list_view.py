@@ -348,6 +348,8 @@ class ItemListViewVisibilityTests(TestCase):
             name="Active Member Item",
             description="Should stay hidden from pending members.",
             owner=owner,
+            created_by=owner,
+            updated_by=owner,
             trust_level_required=TrustLevel.STANDARD,
         )
 
@@ -394,6 +396,8 @@ class ItemListViewVisibilityTests(TestCase):
             name="Pending Member Item",
             description="Should stay hidden until approval.",
             owner=pending_member,
+            created_by=pending_member,
+            updated_by=pending_member,
             trust_level_required=TrustLevel.STANDARD,
         )
 
