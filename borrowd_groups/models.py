@@ -199,7 +199,11 @@ class BorrowdGroup(Model):
             setattr(membership, "_bypass_last_moderator_check", True)
 
         # Remove the user's group membership.
-        perms_group = Group.objects.get(name=self.name)
+        perms_group = self.perms_group
+        if perms_group is None:
+            raise ValueError(
+                "This BorrowdGroup has no perms_group; cannot remove membership."
+            )
         user.groups.remove(perms_group)
 
         # Remove the group membership record.
