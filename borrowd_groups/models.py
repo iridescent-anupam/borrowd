@@ -183,11 +183,31 @@ class BorrowdGroup(Model):
 
         return membership
 
-    def remove_user(self, user: BorrowdUser) -> None:
+    def remove_user(
+        self,
+        user: BorrowdUser,
+        bypass_last_moderator_check: bool = False,
+    ) -> None:
         """
         Remove a user from the group.
         """
-        Membership.objects.get(user=user, group=self).delete()
+        membership: Membership = Membership.objects.get(user=user, group=self)
+
+        # Allow specific flows, such as leaving a group, to bypass the
+        # last-moderator signal check.
+        if bypass_last_moderator_check:
+            setattr(membership, "_bypass_last_moderator_check", True)
+
+        # Remove the user's group membership.
+        perms_group = self.perms_group
+        if perms_group is None:
+            raise ValueError(
+                "This BorrowdGroup has no perms_group; cannot remove membership."
+            )
+        user.groups.remove(perms_group)
+
+        # Remove the group membership record.
+        membership.delete()
 
     def update_user_membership(
         self,

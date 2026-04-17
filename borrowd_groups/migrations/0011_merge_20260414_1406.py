@@ -4,11 +4,9 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('borrowd_groups', '0009_borrowdgroup_deleted_at_borrowdgroup_deleted_by'),
-        ('borrowd_groups', '0010_alter_borrowdgroup_name_and_more'),
+        ("borrowd_groups", "0009_borrowdgroup_deleted_at_borrowdgroup_deleted_by"),
+        ("borrowd_groups", "0010_alter_borrowdgroup_name_and_more"),
     ]
 
-    operations = [
-    ]
+    operations = []

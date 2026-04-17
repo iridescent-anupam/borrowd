@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 from django.contrib.auth.models import Group
 from django.db.models.query import QuerySet
@@ -109,6 +109,11 @@ def _raise_if_last_moderator(
     Check if a group has any remaining moderators.
     If not, raise a ModeratorRequiredException.
     """
+    # Allow flows like leave group to bypass this guard.
+    membership = kwargs.get("instance")
+    if membership and getattr(membership, "_bypass_last_moderator_check", False):
+        return
+
     # First, only apply this logic if we're NOT in a cascade delete
     # from the Group itself.
     origin = kwargs.get("origin")
@@ -144,9 +149,10 @@ def refresh_permissions_on_membership_update(
     #
     # Handle Item permissions
     #
-
-    user: BorrowdUser = instance.user  # type: ignore[assignment]
-    borrowd_group: BorrowdGroup = instance.group  # type: ignore[assignment]
+    membership = instance
+    # error: "_ST" has no attribute "perms_group" / "groups"
+    user = cast(BorrowdUser, instance.user)
+    borrowd_group = cast(BorrowdGroup, instance.group)
     group = borrowd_group.perms_group
     if group is None:
         # This should never happen, but just in case...
@@ -154,7 +160,6 @@ def refresh_permissions_on_membership_update(
             "This BorrowdGroup has no perms_group; cannot sync permissions."
         )
     new_trust_level = instance.trust_level
-    membership = instance
 
     # Handle Group permissions
     all_group_perms = [
@@ -211,16 +216,15 @@ def pre_membership_delete(
     when their membership is deleted.
     """
     membership = instance
-    user: BorrowdUser = membership.user  # type: ignore[assignment]
-    borrowd_group: BorrowdGroup = membership.group  # type: ignore[assignment]
-    # error: "_ST" has no attribute "name"  [attr-defined]
+    user = cast(BorrowdUser, membership.user)
+    borrowd_group = cast(BorrowdGroup, membership.group)
     group = borrowd_group.perms_group
-
     #
     # Check the group will not be left without a Moderator
+    # Pass the membership instance through so intentional bypass flags
+    # set by specific flows, such as leave-group, are respected.
     #
-    _raise_if_last_moderator(user, borrowd_group, **kwargs)
-
+    _raise_if_last_moderator(user, borrowd_group, instance=membership, **kwargs)
     #
     # Remove the user from the Django auth Group so they immediately lose
     # all group-inherited object-level permissions (e.g. VIEW on other
@@ -259,8 +263,8 @@ def pre_membership_save(
     If not, raise a ModeratorRequiredException.
     """
     membership = instance
-    user: BorrowdUser = membership.user  # type: ignore[assignment]
-    group: BorrowdGroup = membership.group  # type: ignore[assignment]
+    user = cast(BorrowdUser, membership.user)
+    group = cast(BorrowdGroup, membership.group)
 
     # Check if the user is being added as a moderator
     if not membership.is_moderator:
