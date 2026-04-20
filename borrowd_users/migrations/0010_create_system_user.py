@@ -8,7 +8,9 @@ from django.db.migrations.state import StateApps
 from borrowd_users.system import SYSTEM_USER_USERNAME
 
 
-def create_system_user(apps: StateApps, schema_editor: BaseDatabaseSchemaEditor):
+def create_system_user(
+    apps: StateApps, schema_editor: BaseDatabaseSchemaEditor
+) -> None:
     BorrowdUser = apps.get_model("borrowd_users", "BorrowdUser")
     BorrowdUser.objects.get_or_create(
         username=SYSTEM_USER_USERNAME,
