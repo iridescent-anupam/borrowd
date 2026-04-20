@@ -67,9 +67,7 @@ class ItemListViewVisibilityTests(TestCase):
         #
         #  Assert
         #
-        self.assertEqual(len(items), 2)
-        self.assertIn(item1, items)
-        self.assertIn(item2, items)
+        self.assertEqual(len(items), 0)  # this view does not show the owner's items
 
     def test_list_items_from_group_membership(self) -> None:
         """
@@ -182,13 +180,13 @@ class ItemListViewVisibilityTests(TestCase):
         #
         #  Assert
         #
-        self.assertEqual(len(items_owner), 2)
-        self.assertIn(item1, items_owner)
+        self.assertEqual(len(items_owner), 1)  # this should not show the owner's own item
+        self.assertNotIn(item1, items_owner)
         self.assertIn(item2, items_owner)
 
-        self.assertEqual(len(items_member), 2)
+        self.assertEqual(len(items_member), 1)  # this should not show the member's own item
         self.assertIn(item1, items_member)
-        self.assertIn(item2, items_member)
+        self.assertNotIn(item2, items_member)
 
     def test_list_items_from_group_membership_with_different_trust_level(self) -> None:
         """
