@@ -260,6 +260,7 @@ class ItemListView(
         # Build card contexts for all items
         items = list(context["object_list"])
         context["item_cards"] = build_item_cards_for_items(items, user, "search")
+        context["user_has_items"] = Item.objects.filter(owner=user).exists
 
         return context
 
