@@ -9,6 +9,7 @@ block items_content %}
     <c-items.filter-form />
     <c-divider />
     <c-items.item-grid :item_cards="item_cards"
+                       :user_has_items="user_has_items"
                        context="search"
                        show_status
                        class="flex flex-col gap-4" />
